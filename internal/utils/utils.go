@@ -16,6 +16,15 @@ func HashPassword(password string) (string, error) {
 	return string(hash), nil
 }
 
+func PasswordMatches(plaintextPassword string, hashedPassword string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plaintextPassword))
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func GenerateJWT(username string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": username,
