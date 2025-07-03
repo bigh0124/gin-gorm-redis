@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/bigh0124/gin-gorm-redis/internal/model"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -36,6 +37,11 @@ func InitDB() error {
 
 	if err := sqlDB.Ping(); err != nil {
 		return fmt.Errorf("failed to test connect db: %w", err)
+	}
+
+	err = db.AutoMigrate(&model.User{})
+	if err != nil {
+		return fmt.Errorf("failed to migration: %w", err)
 	}
 
 	gormDB = db
