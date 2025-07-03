@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/bigh0124/gin-gorm-redis/config"
-	"github.com/bigh0124/gin-gorm-redis/router"
+	"github.com/bigh0124/gin-gorm-redis/internal/config"
+	"github.com/bigh0124/gin-gorm-redis/internal/router"
 )
 
 func main() {

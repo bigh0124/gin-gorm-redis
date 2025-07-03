@@ -5,11 +5,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/bigh0124/gin-gorm-redis/global"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+var gormDB *gorm.DB
 
 func InitDB() error {
 	dsn := AppConfig.Database.Dsn
@@ -37,7 +38,11 @@ func InitDB() error {
 		return fmt.Errorf("failed to test connect db: %w", err)
 	}
 
-	global.DB = db
+	gormDB = db
 	log.Println("db connect successful")
 	return nil
+}
+
+func GetDB() *gorm.DB {
+	return gormDB
 }
