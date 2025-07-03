@@ -59,3 +59,55 @@ func Register(c *gin.Context) {
 		"token": token,
 	})
 }
+
+func Login(c *gin.Context) {
+	var input struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	err := c.ShouldBind(&input)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	db := config.GetDB()
+
+	var user model.User
+	err = db.Where("username = ?", input.Username).First(&user).Error
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	isMatch, err := utils.PasswordMatches(input.Password, user.Password)
+	if !isMatch {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "password not match",
+		})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "server went wrong",
+		})
+		return
+	}
+
+	token, err := utils.GenerateJWT(user.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "server went wrong",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+	})
+}
