@@ -2,17 +2,13 @@ package main
 
 import (
 	"github.com/bigh0124/gin-gorm-redis/config"
-	"github.com/gin-gonic/gin"
+	"github.com/bigh0124/gin-gorm-redis/router"
 )
 
 func main() {
 	config.InitConfig()
 
-	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
+	r := router.SetupRouter()
+
 	r.Run(config.AppConfig.App.Port)
 }
