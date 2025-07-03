@@ -12,11 +12,9 @@ type Config struct {
 		Port string
 	}
 	Database struct {
-		Host     string
-		Port     string
-		User     string
-		Password string
-		Name     string
+		Dsn          string
+		MaxIdleConns int
+		MaxOpenConns int
 	}
 }
 
@@ -36,5 +34,10 @@ func InitConfig() {
 	err := viper.Unmarshal(AppConfig)
 	if err != nil {
 		log.Fatalf("Error unmarshal config: %v", err)
+	}
+
+	err = InitDB()
+	if err != nil {
+		log.Fatalf("Error db connection: %v", err)
 	}
 }
