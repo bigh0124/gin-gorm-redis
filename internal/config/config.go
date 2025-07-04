@@ -42,4 +42,9 @@ func InitConfig() {
 	if err != nil {
 		log.Fatalf("Error db connection: %v", err)
 	}
+
+	err = InitRedis()
+	if err != nil {
+		log.Fatalf("Error redis connection: %v", err)
+	}
 }
