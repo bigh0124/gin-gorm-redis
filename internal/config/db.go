@@ -44,6 +44,11 @@ func InitDB() error {
 		return fmt.Errorf("failed to migration: %w", err)
 	}
 
+	err = db.AutoMigrate(&model.Article{})
+	if err != nil {
+		return fmt.Errorf("failed to migration: %w", err)
+	}
+
 	gormDB = db
 	log.Println("db connect successful")
 	return nil

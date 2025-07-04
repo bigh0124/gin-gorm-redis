@@ -14,5 +14,10 @@ func SetupRouter() *gin.Engine {
 		auth.POST("/login", handler.Login)
 	}
 
+	article := r.Group("/api/article")
+	{
+		article.POST("/", handler.CreateArticleHandler)
+	}
+
 	return r
 }
