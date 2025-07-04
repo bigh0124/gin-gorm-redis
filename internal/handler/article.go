@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/bigh0124/gin-gorm-redis/internal/config"
 	"github.com/bigh0124/gin-gorm-redis/internal/model"
@@ -10,6 +13,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
+
+const cacheKey = "articles:all"
 
 func CreateArticleHandler(c *gin.Context) {
 	var article model.Article
@@ -30,28 +35,60 @@ func CreateArticleHandler(c *gin.Context) {
 		return
 	}
 
+	rdb := config.GetRedis()
+
+	if err := rdb.Del(c.Request.Context(), cacheKey).Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"article": article,
 	})
 }
 
 func GetArticles(c *gin.Context) {
+
+	rdb := config.GetRedis()
+
+	cachedData, err := rdb.Get(c.Request.Context(), cacheKey).Result()
+	if err == nil {
+		var articles []model.Article
+		if err := json.Unmarshal([]byte(cachedData), &articles); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse cached data"})
+			return
+		}
+		c.JSON(http.StatusOK, articles)
+		return
+	}
+
+	if err != redis.Nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Redis query failed"})
+		return
+	}
+
 	db := config.GetDB()
-
 	var articles []model.Article
-
 	if err := db.Find(&articles).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Articles not found"})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database query failed"})
 		}
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"articles": articles,
-	})
+	articleJSON, err := json.Marshal(articles)
+	if err != nil {
+		c.JSON(http.StatusOK, articles)
+		return
+	}
+
+	if err := rdb.Set(c.Request.Context(), cacheKey, articleJSON, 10*time.Minute).Err(); err != nil {
+		log.Printf("Cache setting failed: %v", err)
+	}
+
+	c.JSON(http.StatusOK, articles)
 }
 
 func GetArticleByID(c *gin.Context) {
