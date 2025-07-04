@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/bigh0124/gin-gorm-redis/internal/handler"
+	"github.com/bigh0124/gin-gorm-redis/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,8 +16,10 @@ func SetupRouter() *gin.Engine {
 	}
 
 	article := r.Group("/api/article")
+	article.Use(middleware.Authenticate())
 	{
 		article.POST("/", handler.CreateArticleHandler)
+		article.GET("/", handler.GetArticles)
 	}
 
 	return r
