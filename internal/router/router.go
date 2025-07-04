@@ -21,6 +21,8 @@ func SetupRouter() *gin.Engine {
 		article.POST("/", handler.CreateArticleHandler)
 		article.GET("/", handler.GetArticles)
 		article.GET("/:ID", handler.GetArticleByID)
+		article.GET("/like/:ID", handler.GetArticleLikes)
+		article.POST("/like/:ID", handler.LikeArticle)
 	}
 
 	return r
