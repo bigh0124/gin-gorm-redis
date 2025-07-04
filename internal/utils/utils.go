@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -26,11 +29,39 @@ func PasswordMatches(plaintextPassword string, hashedPassword string) (bool, err
 }
 
 func GenerateJWT(username string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": username,
-		"exp":      time.Now().Add(time.Hour * 72).Unix(),
+	now := time.Now()
+	claims := jwt.RegisteredClaims{
+		Subject:   username,
+		ExpiresAt: jwt.NewNumericDate(now.Add(time.Hour * 72)),
+		IssuedAt:  jwt.NewNumericDate(now),
+		NotBefore: jwt.NewNumericDate(now),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte("secret"))
+}
+
+func ParseJWT(tokenValue string) (string, error) {
+	parts := strings.Split(tokenValue, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		return "", errors.New("invalid token format: expected 'Bearer <token>'")
+	}
+
+	token, err := jwt.ParseWithClaims(parts[1], &jwt.RegisteredClaims{}, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte("secret"), nil
 	})
 
-	signedToken, err := token.SignedString([]byte("secret"))
-	return signedToken, err
+	if err != nil {
+		return "", fmt.Errorf("failed to parse token: %w", err)
+	}
+
+	claims, ok := token.Claims.(*jwt.RegisteredClaims)
+	if !ok {
+		return "", errors.New("invalid token claims")
+	}
+
+	return claims.Subject, nil
 }
