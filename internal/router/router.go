@@ -20,6 +20,7 @@ func SetupRouter() *gin.Engine {
 	{
 		article.POST("/", handler.CreateArticleHandler)
 		article.GET("/", handler.GetArticles)
+		article.GET("/:ID", handler.GetArticleByID)
 	}
 
 	return r

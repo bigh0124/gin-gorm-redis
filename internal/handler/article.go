@@ -52,3 +52,29 @@ func GetArticles(c *gin.Context) {
 		"articles": articles,
 	})
 }
+
+func GetArticleByID(c *gin.Context) {
+	db := config.GetDB()
+
+	var article model.Article
+
+	id, ok := c.Params.Get("ID")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "url not allow",
+		})
+	}
+
+	if err := db.Where("ID = ?", id).First(&article).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"article": article,
+	})
+}
